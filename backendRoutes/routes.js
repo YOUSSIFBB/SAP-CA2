@@ -56,7 +56,7 @@ router.post('/login', (req, res) => {
     });
 });
 
-// Sign-up route
+//sign-up route
 router.post('/signup', (req, res) => {
     const { username, password } = req.body; //extract user input from body request
 
@@ -71,7 +71,7 @@ router.post('/signup', (req, res) => {
     });
 });
 
-// Fetch user details (for potential XSS vulnerability)
+//fetch user details (for potential XSS vulnerability)
 router.get('/users', (req, res) => {
     const sql = `SELECT * FROM users`; // Fetch all users from the database
     db.all(sql, [], (err, rows) => {
