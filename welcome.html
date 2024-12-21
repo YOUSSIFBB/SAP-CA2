@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Welcome, <span id="username"></span>!</h1>
+        <p>We're glad to have you back. Explore our services and programs tailored to your needs.</p>
+        <a href="/index.html" class="button">Go to Home</a>
+    </div>
+    <script>
+        // Extract username from URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const username = params.get('username');
+        document.getElementById('username').textContent = username || 'User';
+    </script>
+</body>
+
+</html>

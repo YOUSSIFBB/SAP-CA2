@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="registration-form">
+            <h1>Get In Touch</h1>
+            <form action="/api/register" method="POST" id="registrationForm">
+                <!-- Message Field -->
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" placeholder="Your message" required minlength="10"
+                    maxlength="500"></textarea>
+                <span class="error" id="messageError"></span>
+
+                <!-- Name Field -->
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" placeholder="Your name" required pattern="[A-Za-z ]{2,50}">
+                <span class="error" id="nameError"></span>
+
+                <!-- Email Field -->
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="Your email" required>
+                <span class="error" id="emailError"></span>
+
+                <!-- Phone Number Field -->
+                <label for="phone">Phone Number:</label>
+                <div>
+                    <select id="country-code" name="country-code" required>
+                        <option value="+353">+353</option>
+                        <option value="+252">+252</option>
+                        <option value="+971">+971</option>
+                    </select>
+                    <input type="tel" id="phone" name="phone" placeholder="Your phone number" required
+                        pattern="[0-9]{7,15}">
+                </div>
+                <span class="error" id="phoneError"></span>
+
+                <!-- Submit Button -->
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!--script validation for phone input field -->
+    <script src="scripts.js"></script>
+</body>
+
+</html>
