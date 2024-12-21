@@ -1,7 +1,7 @@
 /* 
 * Refrences: https://stackoverflow.com/questions/32567444/accessing-sqlite3-database-in-nodejs
 *Refrence: https://www.youtube.com/watch?v=_RtpUaBSie0
-*/ 
+*/
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');  //database path varaiable
@@ -20,7 +20,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 // Vulnerable SQL Injection Route
 router.post('/register', (req, res) => {
-    const { message, name, email, phone } = req.body;   
+    const { message, name, email, phone } = req.body;
 
     //log the incoming data once recived by the api
     console.log('Received data:', req.body);
@@ -80,6 +80,48 @@ router.get('/search', (req, res) => {
             </body>
         </html>
     `);
+});
+
+
+
+
+
+//login and signup code here 
+
+router.post('/login', (req, res) => {
+    const { username, password } = req.body;
+
+    // Query without sanitization (vulnerable to SQL Injection)
+    const sql = `SELECT * FROM auth_users WHERE username = '${username}' AND password = '${password}'`;
+    db.get(sql, (err, row) => {
+        if (err) {
+            console.error('Error logging in:', err.message);
+            res.status(500).send('Login failed.');
+        } else if (row) {
+            // Redirect to the welcome page with the username as a query parameter
+            res.redirect(`/welcome.html?username=${username}`);
+        } else {
+            res.send('<p>Invalid username or password. <a href="/login.html">Try again</a></p>');
+        }
+    });
+});
+
+
+
+
+router.post('/signup', (req, res) => {
+    const { username, password } = req.body;
+
+    // Insert plaintext passwords into the database
+    const sql = `INSERT INTO auth_users (username, password) VALUES ('${username}', '${password}')`;
+    db.run(sql, (err) => {
+        if (err) {
+            console.error('Error signing up:', err.message);
+            res.status(500).send('Sign-up failed.');
+        } else {
+            res.send('<p>Sign-up successful! <a href="login.html">Login here</a></p>');
+        }
+    });
 });
 
 
