@@ -1,6 +1,5 @@
-
-//add validation for the search form
 document.addEventListener('DOMContentLoaded', () => {
+    // Search form validation
     const searchForm = document.querySelector('.search-form');
     const searchInput = document.querySelector('.search-input');
 
@@ -11,25 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
             searchInput.focus();
         }
     });
-});
 
-
-document.getElementById('registrationForm').addEventListener('submit', function (e) {
-    let valid = true;
-
-    //fetch the country code and phone number fields
-    const countryCode = document.getElementById('country-code').value;
-    const phoneNumber = document.getElementById('phone').value;
-
-    //combine the country code and phone number together 
-    const fullPhoneNumber = `${countryCode}${phoneNumber}`;
-
-    //update the phone input with the combined value
-    document.getElementById('phone').value = fullPhoneNumber;
-
-    //check if validation fails
-    if (!valid) {
-        e.preventDefault();  //prevent the user from submitting
+    // Registration button navigation
+    const registerButton = document.querySelector('#registerButton');
+    if (registerButton) {
+        registerButton.addEventListener('click', () => {
+            window.location.href = 'regestration.html';
+        });
     }
-
 });

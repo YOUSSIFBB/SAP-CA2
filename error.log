@@ -1,0 +1,2 @@
+{"level":"error","message":"Error: path must be absolute or specify root to res.sendFile","service":"application-service"}
+{"level":"error","message":"Error: path must be absolute or specify root to res.sendFile","service":"application-service"}

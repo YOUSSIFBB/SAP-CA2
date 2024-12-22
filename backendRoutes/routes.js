@@ -1,87 +1,114 @@
-/* Refrences:
- * https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/Express_Nodejs/Introduction
- * https://stackoverflow.com/questions/32567444/accessing-sqlite3-database-in-nodejs
- * https://www.youtube.com/watch?v=_RtpUaBSie0
- * https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/Express_Nodejs/Introduction
- * 
- *  
-*/
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const winston = require('winston');
+const bcrypt = require('bcrypt');
+const escapeHtml = require('escape-html');
 
 const router = express.Router();
 
-//connect to SQLite database
-const dbPath = path.join(__dirname, '../database/database.db'); //path to database file
+// Logger setup for monitoring
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.json(),
+    defaultMeta: { service: 'api-service' },
+    transports: [
+        new winston.transports.File({ filename: 'error.log', level: 'error' }),
+        new winston.transports.Console({ format: winston.format.simple() })
+    ],
+});
+
+// Connect to SQLite database
+const dbPath = path.join(__dirname, '../database/database.db');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
-        console.error('Error connecting to SQLite database:', err.message); //throw this error message if database connection fails
+        logger.error('Error connecting to SQLite database:', err.message);
     } else {
-        console.log('Connected to SQLite database.');
+        logger.info('Connected to SQLite database.');
     }
 });
 
-//register route 
+// **Secure Register Route**
 router.post('/register', (req, res) => {
-    const { message, name, email, phone } = req.body; //extract user input from body request
-    console.log('Received data:', req.body);
+    const { message, name, email, phone } = req.body;
 
-    const sql = `INSERT INTO users (message, name, email, phone) VALUES ('${message}', '${name}', '${email}', '${phone}')`; //vulnerable query
-    db.run(sql, function (err) {
+    logger.info(`Register request received for name: ${name}, email: ${email}`);
+    const sql = `INSERT INTO users (message, name, email, phone) VALUES (?, ?, ?, ?)`;
+    db.run(sql, [escapeHtml(message), escapeHtml(name), escapeHtml(email), escapeHtml(phone)], function (err) {
         if (err) {
-            console.error('Error inserting data:', err.message); //throw this message if there is an error sending the regestry message data from the regesteration.html
-            res.status(500).send('Failed to register. Please try again.'); // Respond with error
+            logger.error('Error inserting data:', err.message);
+            res.status(500).send('Failed to register. Please try again.');
         } else {
-            console.log('New user added with ID:', this.lastID); // Log the new user's ID, this is the database primary key for user table
-            res.send('Registration successful!'); //throw this message to the user when regestration is successful
+            logger.info(`New user registered with ID: ${this.lastID}`);
+            res.send('Registration successful!');
         }
     });
 });
 
-//login route 
+// **Secure Login Route**
 router.post('/login', (req, res) => {
-    const { username, password } = req.body; //extract user input from body request
+    const { username, password } = req.body;
 
-    const sql = `SELECT * FROM auth_users WHERE username = '${username}' AND password = '${password}'`; //vulnerable query
-    db.get(sql, (err, row) => {
+    logger.info(`Login attempt for username: ${username}`);
+    const sql = `SELECT * FROM auth_users WHERE username = ?`;
+    db.get(sql, [username], (err, row) => {
         if (err) {
-            console.error('Error logging in:', err.message); //throw this error message if application cannot get user credentails from the auth_users table
+            logger.error('Error logging in:', err.message);
             res.status(500).send('Login failed.');
         } else if (row) {
-            res.redirect(`/welcome.html?username=${username}`); //send the user to the welcome page with thier username on the html page
+            bcrypt.compare(password, row.password, (err, result) => {
+                if (result) {
+                    logger.info(`Login successful for username: ${username}`);
+                    res.redirect(`/welcome.html?username=${username}`);
+                } else {
+                    logger.warn(`Invalid login attempt for username: ${username}`);
+                    res.send('<p>Invalid username or password. <a href="/login.html">Try again</a></p>');
+                }
+            });
         } else {
-            res.send('<p>Invalid username or password. <a href="/login.html">Try again</a></p>'); //display this message on a failed log-in with the login page link to rediect the user
+            logger.warn(`Invalid login attempt for username: ${username}`);
+            res.send('<p>Invalid username or password. <a href="/login.html">Try again</a></p>');
         }
     });
 });
 
-//sign-up route
+// **Secure Signup Route**
 router.post('/signup', (req, res) => {
-    const { username, password } = req.body; //extract user input from body request
+    const { username, password } = req.body;
 
-    const sql = `INSERT INTO auth_users (username, password) VALUES ('${username}', '${password}')`; //vulnerable query
-    db.run(sql, (err) => {
+    logger.info(`Signup attempt for username: ${username}`);
+    const saltRounds = 10;
+    bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
         if (err) {
-            console.error('Error signing up:', err.message); //throw this error message if the system is unable to regester the new user to the auth_user table
-            res.status(500).send('Sign-up failed.');
+            logger.error('Error hashing password:', err.message);
+            res.status(500).send('Signup failed.');
         } else {
-            res.send('<p>Sign-up successful! <a href="login.html">Login here</a></p>'); //redirect the user to the login-page upon scucessful regesration sign-up 
+            const sql = `INSERT INTO auth_users (username, password) VALUES (?, ?)`;
+            db.run(sql, [username, hashedPassword], (err) => {
+                if (err) {
+                    logger.error('Error signing up:', err.message);
+                    res.status(500).send('Signup failed.');
+                } else {
+                    logger.info(`Signup successful for username: ${username}`);
+                    res.send('<p>Sign-up successful! <a href="login.html">Login here</a></p>');
+                }
+            });
         }
     });
 });
 
-//fetch user details (for potential XSS vulnerability)
+// **Fetch User Details (Secured)**
 router.get('/users', (req, res) => {
-    const sql = `SELECT * FROM users`; // Fetch all users from the database
+    logger.info('Fetching all users');
+    const sql = `SELECT * FROM users`;
     db.all(sql, [], (err, rows) => {
         if (err) {
-            console.error('Error fetching data:', err.message); // Log error on query failure
+            logger.error('Error fetching data:', err.message);
             res.status(500).send('Error retrieving data');
         } else {
             let userList = '';
             rows.forEach(user => {
-                userList += `<p>${user.name}: ${user.message}</p>`; // Render user messages directly without sanitization (vulnerable)
+                userList += `<p>${escapeHtml(user.name)}: ${escapeHtml(user.message)}</p>`;
             });
             res.send(`
                 <html>
@@ -95,19 +122,20 @@ router.get('/users', (req, res) => {
     });
 });
 
-//XSS vulnerability allowing the user to enter milicous code, intender fot the user to search for a service in html page
+// **Search Route (Secured)**
 router.get('/search', (req, res) => {
-    const term = req.query.term || ''; // Extract search term from query string
+    const term = req.query.term ? escapeHtml(req.query.term) : '';
+    logger.info(`Search performed with term: ${term}`);
     res.send(`
         <html>
             <head><title>Search Results</title></head>
             <body>
                 <h1>Search Unavailable</h1>
-                <p>Search term: ${term}</p> <!-- Vulnerable to reflected XSS -->
+                <p>Search term: ${term}</p>
                 <a href="/">Back to Home</a>
             </body>
         </html>
     `);
 });
 
-module.exports = router; //export routes 
+module.exports = router;
