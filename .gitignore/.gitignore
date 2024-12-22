@@ -1,5 +1,4 @@
-# Ignore node modules (Do not track)
-node_modules/
+
 
 # Ignore sensitive or temporary files (Optional: Do not track)
 .env
