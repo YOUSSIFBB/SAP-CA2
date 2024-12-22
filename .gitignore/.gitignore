@@ -1,0 +1,16 @@
+# Ignore node modules (Do not track)
+node_modules/
+
+# Ignore sensitive or temporary files (Optional: Do not track)
+.env
+*.tmp
+
+# Ignore hidden system files
+.DS_Store
+Thumbs.db
+
+# Ignore Git settings (Optional: Do not track)
+.git/
+
+# Ignore the .vscode folder (Optional: Track only workspace-specific files if needed)
+.vscode/
