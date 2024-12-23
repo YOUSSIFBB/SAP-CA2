@@ -20,3 +20,8 @@ Ensure the following are installed on your system:
 
 
 ## Installation Instructions
+
+1. cd your-repository-name
+2. npm install
+3. Install any missing dependencies (worst case cenario)
+4. access the webpage via http://localhost link in the cmd 
